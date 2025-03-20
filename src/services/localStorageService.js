@@ -39,8 +39,8 @@ const LOCAL_STORAGE_KEYS = {
     }
   };
   
-  // Конвертация данных из админ-формата в пользовательский формат
-  const convertToUserFormat = (pattern) => {
+    // Конвертация данных из админ-формата в пользовательский формат
+    const convertToUserFormat = (pattern) => {
     console.log('Converting pattern to user format:', pattern);
     
     // Выделяем название криптовалюты и тикер из заголовка
@@ -53,20 +53,25 @@ const LOCAL_STORAGE_KEYS = {
       ticker = pattern.originalData.ticker || ticker;
     }
     
+    // Определяем значения для сопротивления и потенциала, избегая нулевых значений
+    const resistance = pattern.levels?.resistance ? parseFloat(pattern.levels.resistance) : '';
+    const support = pattern.levels?.support ? parseFloat(pattern.levels.support) : '';
+    const potential = pattern.levels?.potential ? parseFloat(pattern.levels.potential) : '';
+    
     return {
       id: pattern.id,
       name: name,
       ticker: ticker,
-      price: parseFloat(pattern.levels?.resistance || 0),
-      priceChange: parseFloat(pattern.levels?.potential || 0),
+      price: resistance || (pattern.originalData?.price || 0),
+      priceChange: potential || (pattern.originalData?.priceChange || 0),
       patternType: pattern.patternType,
       patternName: pattern.title,
       patternLabel: pattern.patternLabel,
       description: pattern.description,
       levels: {
-        resistance: parseFloat(pattern.levels?.resistance || 0),
-        support: parseFloat(pattern.levels?.support || 0),
-        potential: parseFloat(pattern.levels?.potential || 0),
+        resistance: resistance,
+        support: support,
+        potential: potential,
         timeframe: pattern.levels?.timeframe || '14 дней'
       },
       timestamp: pattern.originalData?.timestamp || new Date().toLocaleDateString('ru-RU', {

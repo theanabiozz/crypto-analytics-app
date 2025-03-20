@@ -124,14 +124,16 @@ const PatternEditor = () => {
         // Добавляем новый паттерн в список и сохраняем
         localStorageService.savePatterns([...patterns, newPattern]);
         
+        // Триггерим событие для обновления данных
+        window.dispatchEvent(new Event('storage'));
+        
         // Показываем сообщение об успехе
         setSaveSuccess(true);
         setSaving(false);
         
-        // Немного задержки перед перенаправлением
+        // Перенаправляем на страницу со списком паттернов
         setTimeout(() => {
-          // Перейдем на главную страницу после добавления паттерна
-          window.location.href = '/';
+          navigate('/admin/content?type=patterns');
         }, 1500);
       } else {
         // Обновляем существующий паттерн
@@ -145,14 +147,11 @@ const PatternEditor = () => {
         // Сохраняем обновленный список
         localStorageService.savePatterns(updatedPatterns);
         
+        // Триггерим событие для обновления данных
+        window.dispatchEvent(new Event('storage'));
+        
         setSaveSuccess(true);
         setSaving(false);
-        
-        // Немного задержки перед перенаправлением
-        setTimeout(() => {
-          // Перейдем на главную страницу после обновления паттерна
-          window.location.href = '/';
-        }, 1500);
       }
     } catch (error) {
       console.error('Error saving pattern:', error);
@@ -177,8 +176,11 @@ const PatternEditor = () => {
       // Сохраняем обновленный список
       localStorageService.savePatterns(updatedPatterns);
       
-      // Перенаправляем на главную страницу после удаления
-      window.location.href = '/';
+      // Триггерим событие для обновления данных
+      window.dispatchEvent(new Event('storage'));
+      
+      // Перенаправляем на страницу со списком паттернов
+      navigate('/admin/content?type=patterns');
     } catch (error) {
       console.error('Error deleting pattern:', error);
       alert('Произошла ошибка при удалении паттерна');

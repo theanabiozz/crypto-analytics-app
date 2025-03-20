@@ -166,22 +166,13 @@ const TelegramApp = () => {
     }
   };
 
+  // Убираем кнопку обновления, оставляем только автоматическое обновление
   return (
     <div className="app-container">
       <Header />
       
       {(activeTab === 'analytics' || activeTab === 'favorites') && (
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Subtitle lastUpdate={lastUpdate} />
-          <Button 
-            onClick={refreshData} 
-            variant="contained" 
-            size="small"
-            sx={{ mr: 2 }}
-          >
-            Обновить данные
-          </Button>
-        </Box>
+        <Subtitle lastUpdate={lastUpdate} />
       )}
       
       {renderContent()}
