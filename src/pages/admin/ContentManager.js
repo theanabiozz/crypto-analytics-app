@@ -31,6 +31,7 @@ import {
 } from '@mui/icons-material';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { contentService, patternsService } from '../../services/api.service';
+import localStorageService from '../../services/localStorageService';
 
 // Компонент панели с вкладками для разных типов контента
 const ContentTabs = ({ value, onChange }) => {
@@ -75,19 +76,33 @@ const ContentManager = () => {
   const fetchContent = async () => {
     setLoading(true);
     try {
-      // Здесь мы используем заглушку для разработки
-      // В реальном приложении используйте API-запросы
+      // Загрузка данных из localStorage в зависимости от типа контента
+      let data = [];
       
-      setTimeout(() => {
-        if (contentType === 'patterns') {
-          setItems(demoPatterns);
-        } else if (contentType === 'articles') {
-          setItems(demoArticles);
-        } else {
-          setItems(demoEducational);
-        }
-        setLoading(false);
-      }, 1000);
+      if (contentType === 'patterns') {
+        data = localStorageService.getPatterns();
+      } else if (contentType === 'articles') {
+        data = localStorageService.getArticles();
+      } else {
+        data = localStorageService.getEducational();
+      }
+      
+      setItems(data);
+      setLoading(false);
+      
+      // Оставляем код для заглушки, если localStorageService недоступен или пуст
+      if (data.length === 0) {
+        setTimeout(() => {
+          if (contentType === 'patterns') {
+            setItems(demoPatterns);
+          } else if (contentType === 'articles') {
+            setItems(demoArticles);
+          } else {
+            setItems(demoEducational);
+          }
+          setLoading(false);
+        }, 1000);
+      }
       
       // Для реального API раскомментируйте код ниже
       /*
@@ -103,8 +118,7 @@ const ContentManager = () => {
       */
     } catch (error) {
       console.error(`Error fetching ${contentType}:`, error);
-    } finally {
-      // setLoading(false); // Для реального API
+      setLoading(false);
     }
   };
 
@@ -134,9 +148,19 @@ const ContentManager = () => {
     if (!itemToDelete) return;
     
     try {
-      // Для демонстрации
+      // Удаляем элемент из списка
       const updatedItems = items.filter(item => item.id !== itemToDelete.id);
       setItems(updatedItems);
+      
+      // Сохраняем обновленный список в localStorage
+      if (contentType === 'patterns') {
+        localStorageService.savePatterns(updatedItems);
+      } else if (contentType === 'articles') {
+        localStorageService.saveArticles(updatedItems);
+      } else {
+        localStorageService.saveEducational(updatedItems);
+      }
+      
       setDeleteDialogOpen(false);
       setItemToDelete(null);
       

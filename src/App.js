@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Box, Button } from '@mui/material';
 import './App.css';
 import './assets/styles/index.css';
 
@@ -14,10 +15,11 @@ import Home from './pages/Home';
 import AdminLogin from './pages/admin/Login';
 import Dashboard from './pages/admin/Dashboard';
 import ContentManager from './pages/admin/ContentManager';
+import PatternEditor from './pages/admin/PatternEditor';
 
 // Сервисы и данные
 import telegramService from './services/telegramService';
-import cryptoData from './data/cryptoAnalytics';
+import localStorageService from './services/localStorageService';
 
 // Импорт контекста аутентификации
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -53,18 +55,46 @@ const TelegramApp = () => {
   // Дата последнего обновления
   const [lastUpdate, setLastUpdate] = useState('14 марта 2025, 13:03');
 
+  // Функция обновления данных
+  const refreshData = () => {
+    const userPatterns = localStorageService.getUserPatterns();
+    console.log('Refreshing data:', userPatterns);
+    setCryptoList(userPatterns);
+    setLastUpdate(new Date().toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    }) + ', ' + new Date().toLocaleTimeString('ru-RU', {
+      hour: '2-digit',
+      minute: '2-digit'
+    }));
+  };
+
+  // Загружаем данные при первом рендере и настраиваем слушатели событий
   useEffect(() => {
     // Инициализируем Telegram WebApp
     telegramService.init();
     
-    // Загружаем данные
-    setCryptoList(cryptoData);
+    // Загружаем данные из localStorage
+    refreshData();
     
     // Здесь можно загрузить избранное из localStorage или из данных бота
     const savedFavorites = localStorage.getItem('favorites');
     if (savedFavorites) {
       setFavorites(JSON.parse(savedFavorites));
     }
+    
+    // Добавляем обработчик события storage для прослушивания изменений в localStorage
+    const handleStorageChange = () => {
+      refreshData();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Очистка обработчика событий при размонтировании компонента
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   // Сохраняем избранное при его изменении
@@ -141,7 +171,17 @@ const TelegramApp = () => {
       <Header />
       
       {(activeTab === 'analytics' || activeTab === 'favorites') && (
-        <Subtitle lastUpdate={lastUpdate} />
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Subtitle lastUpdate={lastUpdate} />
+          <Button 
+            onClick={refreshData} 
+            variant="contained" 
+            size="small"
+            sx={{ mr: 2 }}
+          >
+            Обновить данные
+          </Button>
+        </Box>
       )}
       
       {renderContent()}
@@ -177,6 +217,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <ContentManager />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/patterns/new" 
+            element={
+              <ProtectedRoute>
+                <PatternEditor />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/patterns/:id" 
+            element={
+              <ProtectedRoute>
+                <PatternEditor />
               </ProtectedRoute>
             } 
           />
