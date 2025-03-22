@@ -9,6 +9,7 @@ import Header from './components/Header';
 import Subtitle from './components/Subtitle';
 import CryptoCard from './components/CryptoCard';
 import Navigation from './components/Navigation';
+import PatternDetails from './components/PatternDetails';
 import Home from './pages/Home';
 
 // Импорт компонентов админ-панели
@@ -209,6 +210,35 @@ const TelegramApp = () => {
     // Инициализируем Telegram WebApp
     telegramService.init();
     
+    // Определяем, запущено ли приложение внутри Telegram
+    const isTelegramApp = window.Telegram && window.Telegram.WebApp;
+    
+    // Добавляем класс к body, если приложение запущено внутри Telegram
+    if (isTelegramApp) {
+      document.body.classList.add('telegram-app');
+      
+      // Определяем, используется ли темная тема
+      const isDarkTheme = window.Telegram.WebApp.colorScheme === 'dark';
+      if (isDarkTheme) {
+        document.body.classList.add('dark-theme');
+      }
+      
+      console.log('Приложение запущено внутри Telegram WebApp');
+      console.log('Цветовая схема:', window.Telegram.WebApp.colorScheme);
+      
+      // Применяем стили из темы Telegram
+      const themeParams = window.Telegram.WebApp.themeParams;
+      if (themeParams) {
+        // Устанавливаем CSS переменные для всех параметров темы
+        Object.entries(themeParams).forEach(([key, value]) => {
+          const cssVarName = '--tg-theme-' + key.replace(/_/g, '-');
+          document.documentElement.style.setProperty(cssVarName, value);
+        });
+      }
+    } else {
+      console.log('Приложение запущено вне Telegram WebApp');
+    }
+    
     // Загружаем данные из API
     refreshData();
     
@@ -373,6 +403,9 @@ function App() {
 
           {/* Публичный маршрут для страницы сайта */}
           <Route path="/web" element={<Home />} />
+          
+          {/* Маршрут для детального просмотра паттерна */}
+          <Route path="/pattern/:id" element={<PatternDetails />} />
           
           {/* Маршруты админ-панели */}
           <Route path="/admin/login" element={<AdminLogin />} />

@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ChartPlaceholder from './ChartPlaceholder';
 
 // Форматирование цены для начального рендеринга
@@ -35,6 +36,8 @@ const arePropsEqual = (prevProps, nextProps) => {
 };
 
 const CryptoCard = ({ crypto, isFavorite, onToggleFavorite }) => {
+  const navigate = useNavigate();
+  
   // Проверка на существование crypto
   if (!crypto) {
     console.warn('CryptoCard: получен undefined или null объект crypto');
@@ -43,6 +46,7 @@ const CryptoCard = ({ crypto, isFavorite, onToggleFavorite }) => {
 
   // Деструктуризация объекта crypto с дефолтными значениями
   const {
+    id = '',
     name = 'Неизвестная криптовалюта',
     ticker = '???',
     price = 0,
@@ -51,7 +55,8 @@ const CryptoCard = ({ crypto, isFavorite, onToggleFavorite }) => {
     patternName = 'Паттерн не определен',
     patternLabel = 'Неизвестный',
     description = 'Описание отсутствует',
-    timestamp = ''
+    timestamp = '',
+    chartImageUrl = '' // URL изображения графика
   } = crypto;
 
   // Безопасное получение объекта levels (с проверкой на существование)
@@ -69,9 +74,25 @@ const CryptoCard = ({ crypto, isFavorite, onToggleFavorite }) => {
                       
   // Создаем уникальный идентификатор для обновления цены
   const priceSymbol = ticker ? `${ticker.toUpperCase()}USDT` : '';
+  
+  // Проверка на наличие изображения графика
+  const hasChartImage = !!chartImageUrl;
+  
+  // Обработчик клика по карточке
+  const handleCardClick = () => {
+    navigate(`/pattern/${id}`);
+  };
+  
+  // Обработчик клика по звездочке избранного
+  const handleFavoriteClick = (e) => {
+    e.stopPropagation(); // Предотвращаем всплытие события
+    if (onToggleFavorite) {
+      onToggleFavorite();
+    }
+  };
 
   return (
-    <div className="crypto-card">
+    <div className="crypto-card" onClick={handleCardClick}>
       <div className="card-header">
         <div className="coin-info">
           <div className="coin-icon">{ticker ? ticker.charAt(0) : '?'}</div>
@@ -93,10 +114,17 @@ const CryptoCard = ({ crypto, isFavorite, onToggleFavorite }) => {
           </span>
         </div>
       </div>
-      <div className="chart-container">
-        <ChartPlaceholder coinId={ticker || 'unknown'} patternType={patternType || 'neutral'} />
+      
+      {/* Контейнер графика */}
+      <div className={`chart-container ${hasChartImage ? 'has-chart-image' : ''}`}>
+        <ChartPlaceholder 
+          coinId={ticker || 'unknown'} 
+          patternType={patternType || 'neutral'} 
+          chartImageUrl={chartImageUrl} 
+        />
         <div className={`pattern-label ${patternClass}`}>{patternLabel || 'Неизвестный'}</div>
       </div>
+      
       <div className="card-body">
         <div className="pattern-name">{patternName || 'Неизвестный паттерн'}</div>
         <div className="pattern-description">{description || 'Описание отсутствует'}</div>
@@ -136,10 +164,7 @@ const CryptoCard = ({ crypto, isFavorite, onToggleFavorite }) => {
               cursor: 'pointer',
               fontSize: '16px'
             }}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (onToggleFavorite) onToggleFavorite();
-            }}
+            onClick={handleFavoriteClick}
           >
             {isFavorite ? '⭐' : '☆'}
           </span>

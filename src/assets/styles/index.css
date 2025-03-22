@@ -1,271 +1,580 @@
 :root {
-    --tg-theme-bg-color: #17212b;
-    --tg-theme-text-color: #ffffff;
-    --tg-theme-hint-color: #7d8b99;
-    --tg-theme-link-color: #64beff;
-    --tg-theme-button-color: #2ea6ff;
-    --tg-theme-button-text-color: #ffffff;
-    --tg-theme-secondary-bg-color: #232e3c;
-    --card-bg-color: #232e3c;
-    --success-color: #4cd964;
-    --danger-color: #ff3b30;
-    --warning-color: #ffcc00;
+  --tg-theme-bg-color: #17212b;
+  --tg-theme-text-color: #ffffff;
+  --tg-theme-hint-color: #7d8b99;
+  --tg-theme-link-color: #64beff;
+  --tg-theme-button-color: #2ea6ff;
+  --tg-theme-button-text-color: #ffffff;
+  --tg-theme-secondary-bg-color: #232e3c;
+  --card-bg-color: #232e3c;
+  --success-color: #4cd964;
+  --danger-color: #ff3b30;
+  --warning-color: #ffcc00;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  background-color: var(--tg-theme-bg-color);
+  color: var(--tg-theme-text-color);
+  padding: 10px;
+  padding-bottom: 80px;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
+.logo-icon {
+  width: 30px;
+  height: 30px;
+  margin-right: 8px;
+  background-color: #2ea6ff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-subtitle {
+  margin-bottom: 20px;
+}
+
+.app-subtitle h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.app-subtitle p {
+  font-size: 12px;
+  color: var(--tg-theme-hint-color);
+}
+
+/* Стили для кликабельных карточек */
+.crypto-card {
+  background-color: var(--card-bg-color);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.crypto-card:active {
+  transform: scale(0.98);
+}
+
+/* Визуальный эффект нажатия для мобильных устройств */
+@media (hover: hover) {
+  .crypto-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   }
-  
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  }
-  
-  body {
-    background-color: var(--tg-theme-bg-color);
-    color: var(--tg-theme-text-color);
-    padding: 10px;
-    padding-bottom: 80px;
-  }
-  
-  .app-container {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
-  
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
-    margin-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
-  
-  .logo {
-    font-size: 24px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-  }
-  
-  .logo-icon {
-    width: 30px;
-    height: 30px;
-    margin-right: 8px;
-    background-color: #2ea6ff;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .app-subtitle {
-    margin-bottom: 20px;
-  }
-  
-  .app-subtitle h2 {
-    font-size: 18px;
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-  
-  .app-subtitle p {
-    font-size: 12px;
-    color: var(--tg-theme-hint-color);
-  }
-  
-  .crypto-card {
-    background-color: var(--card-bg-color);
-    border-radius: 12px;
-    margin-bottom: 16px;
-    overflow: hidden;
-  }
-  
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-  
-  .coin-info {
-    display: flex;
-    align-items: center;
-  }
-  
-  .coin-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background-color: #333;
-    margin-right: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .coin-name {
-    font-weight: bold;
-  }
-  
-  .coin-ticker {
-    color: var(--tg-theme-hint-color);
-    margin-left: 5px;
-  }
-  
-  .price-info {
-    text-align: right;
-  }
-  
-  .coin-price {
-    font-weight: bold;
-  }
-  
-  .price-change {
-    font-size: 14px;
-    padding: 2px 6px;
-    border-radius: 4px;
-  }
-  
-  .price-up {
-    background-color: rgba(76, 217, 100, 0.15);
-    color: var(--success-color);
-  }
-  
-  .price-down {
-    background-color: rgba(255, 59, 48, 0.15);
-    color: var(--danger-color);
-  }
-  
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.coin-info {
+  display: flex;
+  align-items: center;
+}
+
+.coin-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #333;
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.coin-name {
+  font-weight: bold;
+}
+
+.coin-ticker {
+  color: var(--tg-theme-hint-color);
+  margin-left: 5px;
+}
+
+.price-info {
+  text-align: right;
+}
+
+.coin-price {
+  font-weight: bold;
+}
+
+.price-change {
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.price-up {
+  background-color: rgba(76, 217, 100, 0.15);
+  color: var(--success-color);
+}
+
+.price-down {
+  background-color: rgba(255, 59, 48, 0.15);
+  color: var(--danger-color);
+}
+
+/* Обновленные стили для контейнера графиков */
+.chart-container {
+  padding: 10px;
+  height: 180px;  /* Фиксированная высота для мобильных устройств */
+  position: relative;
+  background-color: #1A2530;  /* Темный фон для графиков */
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+
+/* Улучшенные стили для изображений графиков */
+.real-chart-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.real-chart-container img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.chart-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Улучшенный контраст для меток */
+.pattern-label {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  z-index: 10;  /* Убедимся, что метка поверх графика */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);  /* Тень для лучшей читаемости */
+}
+
+.bullish {
+  background-color: rgba(76, 217, 100, 0.25);
+  border-left: 3px solid var(--success-color);
+  color: #ffffff;  /* Белый текст для лучшего контраста */
+}
+
+.bearish {
+  background-color: rgba(255, 59, 48, 0.25);
+  border-left: 3px solid var(--danger-color);
+  color: #ffffff;  /* Белый текст для лучшего контраста */
+}
+
+.neutral {
+  background-color: rgba(255, 204, 0, 0.2);
+  border-left: 3px solid var(--warning-color);
+}
+
+.card-body {
+  padding: 16px;
+}
+
+.pattern-name {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.pattern-description {
+  color: var(--tg-theme-hint-color);
+  font-size: 14px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.key-levels {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+.level {
+  flex: 1;
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 8px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.level-value {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.level-label {
+  font-size: 12px;
+  color: var(--tg-theme-hint-color);
+}
+
+.timestamp {
+  font-size: 12px;
+  color: var(--tg-theme-hint-color);
+  text-align: right;
+  margin-top: 10px;
+}
+
+.nav-tabs {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background-color: var(--tg-theme-secondary-bg-color);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 1000;
+}
+
+.tab {
+  flex: 1;
+  padding: 12px;
+  text-align: center;
+  color: var(--tg-theme-hint-color);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tab.active {
+  color: var(--tg-theme-button-color);
+}
+
+.tab-icon {
+  display: block;
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+/* Адаптация для мобильных устройств */
+@media (max-width: 480px) {
   .chart-container {
-    padding: 10px;
-    height: 200px;
-    position: relative;
-  }
-  
-  .chart-placeholder {
-    width: 100%;
-    height: 100%;
-    border-radius: 8px;
-    overflow: hidden;
-    background-color: rgba(0, 0, 0, 0.1);
+    height: 160px;  /* Немного меньше для очень маленьких экранов */
   }
   
   .pattern-label {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    background-color: rgba(35, 46, 60, 0.8);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: bold;
-  }
-  
-  .bullish {
-    background-color: rgba(76, 217, 100, 0.2);
-    border-left: 3px solid var(--success-color);
-  }
-  
-  .bearish {
-    background-color: rgba(255, 59, 48, 0.2);
-    border-left: 3px solid var(--danger-color);
-  }
-  
-  .neutral {
-    background-color: rgba(255, 204, 0, 0.2);
-    border-left: 3px solid var(--warning-color);
+    font-size: 10px;  /* Меньший размер шрифта */
+    padding: 2px 6px;
   }
   
   .card-body {
-    padding: 16px;
+    padding: 12px 10px;  /* Меньше отступов */
+  }
+}
+
+/* Адаптация для телеграм веб-приложения */
+body.telegram-app {
+  padding-bottom: 0;  /* Убираем отступ внизу для телеграм-приложения */
+}
+
+.telegram-app .chart-container {
+  background-color: var(--tg-theme-secondary-bg-color, #1A2530);
+}
+
+/* Улучшенные стили для телеграм темной темы */
+.telegram-app.dark-theme .pattern-label.bullish {
+  background-color: rgba(76, 217, 100, 0.25);
+}
+
+.telegram-app.dark-theme .pattern-label.bearish {
+  background-color: rgba(255, 59, 48, 0.25);
+}
+
+/* Стили для страницы детального просмотра паттерна */
+
+/* Контейнер детального просмотра */
+.pattern-details-container {
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 70px 0;
+  min-height: 100vh;
+  background-color: var(--tg-theme-bg-color);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Состояние загрузки */
+.pattern-details-container.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* Сообщение об ошибке */
+.pattern-details-container.error {
+  padding: 20px;
+  text-align: center;
+}
+
+.error-message {
+  color: var(--danger-color);
+  margin-top: 20px;
+}
+
+/* Верхняя панель */
+.details-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.back-button {
+  margin-right: 10px;
+  color: var(--tg-theme-text-color);
+}
+
+.details-title {
+  font-size: 20px;
+  font-weight: bold;
+  flex-grow: 1;
+  margin: 0;
+  text-align: center;
+}
+
+.ticker {
+  color: var(--tg-theme-hint-color);
+  font-weight: normal;
+  margin-left: 5px;
+}
+
+.favorite-button {
+  color: var(--tg-theme-text-color);
+}
+
+/* Информация о цене */
+.details-price-info {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.current-price {
+  font-size: 28px;
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.details-price-info .price-change {
+  font-size: 16px;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+/* График */
+.details-chart {
+  position: relative;
+  width: 100%;
+  margin-bottom: 20px;
+  max-height: 300px;
+  background-color: #1A2530;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.chart-image {
+  width: 100%;
+  object-fit: contain;
+  display: block;
+  max-height: 300px;
+}
+
+.details-chart .chart-placeholder {
+  height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tg-theme-hint-color);
+}
+
+.chart-pattern-label {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Название паттерна */
+.details-pattern-name {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 10px;
+  margin-bottom: 15px;
+}
+
+.details-pattern-name h2 {
+  font-size: 20px;
+  margin: 0;
+}
+
+.pattern-type-chip {
+  font-weight: bold;
+}
+
+.pattern-type-chip.bullish {
+  background-color: var(--success-color) !important;
+  color: #fff !important;
+}
+
+.pattern-type-chip.bearish {
+  background-color: var(--danger-color) !important;
+  color: #fff !important;
+}
+
+.pattern-type-chip.neutral {
+  background-color: var(--warning-color) !important;
+  color: #000 !important;
+}
+
+/* Описание паттерна */
+.details-description {
+  padding: 10px;
+  margin-bottom: 20px;
+  line-height: 1.5;
+  font-size: 16px;
+}
+
+/* Ключевые уровни */
+.details-key-levels {
+  padding: 10px;
+}
+
+.details-key-levels h3 {
+  font-size: 18px;
+  margin-bottom: 15px;
+}
+
+.key-levels-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.level-box {
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.level-value {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.level-label {
+  font-size: 14px;
+  color: var(--tg-theme-hint-color);
+}
+
+/* Дополнительная информация */
+.details-additional-info {
+  padding: 10px;
+  margin-top: 20px;
+  color: var(--tg-theme-hint-color);
+  font-size: 14px;
+}
+
+.timestamp {
+  text-align: right;
+}
+
+/* Адаптация для Telegram WebApp */
+body.telegram-app .pattern-details-container {
+  padding-top: env(safe-area-inset-top, 0);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0) + 10px);
+}
+
+/* Адаптивные стили */
+@media (max-width: 380px) {
+  .key-levels-grid {
+    grid-template-columns: 1fr;
   }
   
-  .pattern-name {
-    font-weight: bold;
-    margin-bottom: 8px;
+  .details-title {
+    font-size: 18px;
   }
   
-  .pattern-description {
-    color: var(--tg-theme-hint-color);
-    font-size: 14px;
-    line-height: 1.4;
-    margin-bottom: 8px;
+  .current-price {
+    font-size: 24px;
   }
-  
-  .key-levels {
-    margin-top: 10px;
-    display: flex;
-    gap: 10px;
+}
+
+/* Анимации для плавных переходов */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Адаптивные стили для Telegram Web App */
+@media (prefers-color-scheme: light) {
+  :root {
+    --tg-theme-bg-color: #f0f0f0;
+    --tg-theme-text-color: #000000;
+    --tg-theme-hint-color: #707579;
+    --tg-theme-link-color: #0088cc;
+    --tg-theme-button-color: #0088cc;
+    --tg-theme-button-text-color: #ffffff;
+    --tg-theme-secondary-bg-color: #e0e0e0;
+    --card-bg-color: #ffffff;
   }
-  
-  .level {
-    flex: 1;
-    background-color: rgba(255, 255, 255, 0.05);
-    padding: 8px;
-    border-radius: 6px;
-    text-align: center;
-  }
-  
-  .level-value {
-    font-weight: bold;
-    font-size: 14px;
-  }
-  
-  .level-label {
-    font-size: 12px;
-    color: var(--tg-theme-hint-color);
-  }
-  
-  .timestamp {
-    font-size: 12px;
-    color: var(--tg-theme-hint-color);
-    text-align: right;
-    margin-top: 10px;
-  }
-  
-  .nav-tabs {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    background-color: var(--tg-theme-secondary-bg-color);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    z-index: 1000;
-  }
-  
-  .tab {
-    flex: 1;
-    padding: 12px;
-    text-align: center;
-    color: var(--tg-theme-hint-color);
-    font-size: 12px;
-    cursor: pointer;
-  }
-  
-  .tab.active {
-    color: var(--tg-theme-button-color);
-  }
-  
-  .tab-icon {
-    display: block;
-    font-size: 20px;
-    margin-bottom: 4px;
-  }
-  
-  /* Адаптивные стили для Telegram Web App */
-  @media (prefers-color-scheme: light) {
-    :root {
-      --tg-theme-bg-color: #f0f0f0;
-      --tg-theme-text-color: #000000;
-      --tg-theme-hint-color: #707579;
-      --tg-theme-link-color: #0088cc;
-      --tg-theme-button-color: #0088cc;
-      --tg-theme-button-text-color: #ffffff;
-      --tg-theme-secondary-bg-color: #e0e0e0;
-      --card-bg-color: #ffffff;
-    }
-  }
+}

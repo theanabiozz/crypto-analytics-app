@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// Обновленная версия src/pages/admin/PatternEditor.js
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -16,26 +17,31 @@ import {
   Alert,
   Card,
   CardContent,
-  Snackbar
+  Snackbar,
+  IconButton
 } from '@mui/material';
 import {
   Save as SaveIcon,
   Delete as DeleteIcon,
-  ArrowBack as ArrowBackIcon
+  ArrowBack as ArrowBackIcon,
+  CloudUpload as CloudUploadIcon,
+  Image as ImageIcon
 } from '@mui/icons-material';
 import AdminLayout from '../../components/admin/AdminLayout';
-// Заменяем импорт localStorageService на patternsService
 import { patternsService } from '../../services/databaseService';
 
 const PatternEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isNewPattern = !id || id === 'new';
+  const fileInputRef = useRef(null);
   
   const [loading, setLoading] = useState(!isNewPattern);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [chartImage, setChartImage] = useState(null);
+  const [chartImagePreview, setChartImagePreview] = useState('');
   
   // Состояние формы
   const [pattern, setPattern] = useState({
@@ -49,6 +55,7 @@ const PatternEditor = () => {
     patternName: '', // Название паттерна
     patternLabel: '',
     status: 'draft', // draft, published
+    chartImageUrl: '', // URL скриншота графика
     levels: {
       resistance: '',
       support: '',
@@ -68,6 +75,11 @@ const PatternEditor = () => {
           if (response && response.data) {
             console.log('Загружен паттерн из API:', response.data);
             setPattern(response.data);
+            
+            // Если есть изображение, устанавливаем предпросмотр
+            if (response.data.chartImageUrl) {
+              setChartImagePreview(response.data.chartImageUrl);
+            }
           } else {
             // Если паттерн не найден, показываем ошибку
             console.error('Паттерн не найден в API');
@@ -109,6 +121,33 @@ const PatternEditor = () => {
     }
   };
 
+  // Обработчик загрузки файла
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // Проверяем тип файла
+      if (!file.type.match('image.*')) {
+        alert('Пожалуйста, выберите изображение');
+        return;
+      }
+
+      // Устанавливаем файл для последующей загрузки
+      setChartImage(file);
+
+      // Создаем URL для предпросмотра
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setChartImagePreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Обработчик клика по кнопке загрузки
+  const handleUploadClick = () => {
+    fileInputRef.current.click();
+  };
+
   // Обработчик сохранения формы
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -117,9 +156,33 @@ const PatternEditor = () => {
     setSaveError('');
     
     try {
+      let chartImageUrl = pattern.chartImageUrl || '';
+
+      // Если выбран новый файл, сначала загружаем его
+      if (chartImage) {
+        const formData = new FormData();
+        formData.append('chart', chartImage);
+        
+        try {
+          const uploadResponse = await patternsService.uploadChartImage(formData);
+          
+          if (uploadResponse && uploadResponse.data && uploadResponse.data.imageUrl) {
+            chartImageUrl = uploadResponse.data.imageUrl;
+          } else {
+            throw new Error('Не удалось получить URL загруженного изображения');
+          }
+        } catch (uploadError) {
+          console.error('Ошибка при загрузке изображения:', uploadError);
+          setSaveError('Ошибка при загрузке изображения. Пожалуйста, попробуйте еще раз.');
+          setSaving(false);
+          return;
+        }
+      }
+      
       // Подготавливаем данные паттерна для сохранения
       const patternData = {
         ...pattern,
+        chartImageUrl,
         updatedAt: new Date().toISOString()
       };
       
@@ -185,6 +248,16 @@ const PatternEditor = () => {
       console.error('Ошибка при удалении паттерна:', error);
       alert('Произошла ошибка при удалении паттерна');
     }
+  };
+
+  // Обработчик удаления изображения
+  const handleRemoveImage = () => {
+    setChartImage(null);
+    setChartImagePreview('');
+    setPattern({
+      ...pattern,
+      chartImageUrl: ''
+    });
   };
 
   return (
@@ -386,6 +459,72 @@ const PatternEditor = () => {
                     />
                   </Grid>
                 </Grid>
+
+                {/* Загрузка скриншота графика */}
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Скриншот графика
+                  </Typography>
+                  
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={handleFileChange}
+                  />
+                  
+                  <Box sx={{ 
+                    border: '1px dashed #ccc', 
+                    borderRadius: 1, 
+                    p: 2, 
+                    textAlign: 'center',
+                    mb: 2
+                  }}>
+                    {chartImagePreview ? (
+                      <Box sx={{ position: 'relative' }}>
+                        <img 
+                          src={chartImagePreview} 
+                          alt="Preview" 
+                          style={{ 
+                            width: '100%', 
+                            maxHeight: '300px', 
+                            objectFit: 'contain',
+                            borderRadius: 4
+                          }} 
+                        />
+                        <IconButton
+                          sx={{ 
+                            position: 'absolute', 
+                            top: 8, 
+                            right: 8, 
+                            bgcolor: 'rgba(255, 255, 255, 0.8)',
+                            '&:hover': {
+                              bgcolor: 'rgba(255, 255, 255, 0.9)'
+                            }
+                          }}
+                          onClick={handleRemoveImage}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
+                    ) : (
+                      <Box>
+                        <ImageIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
+                        <Typography variant="body1" color="text.secondary" gutterBottom>
+                          Загрузите скриншот графика
+                        </Typography>
+                        <Button
+                          variant="outlined"
+                          startIcon={<CloudUploadIcon />}
+                          onClick={handleUploadClick}
+                        >
+                          Выбрать файл
+                        </Button>
+                      </Box>
+                    )}
+                  </Box>
+                </Box>
               </Paper>
               
               {/* Уровни и значения */}
@@ -516,6 +655,21 @@ const PatternEditor = () => {
                             : 'Нейтральный паттерн')
                       }
                     </Box>
+                    
+                    {/* Предпросмотр изображения графика */}
+                    {chartImagePreview && (
+                      <Box sx={{ mt: 2, mb: 2 }}>
+                        <img 
+                          src={chartImagePreview} 
+                          alt="График" 
+                          style={{ 
+                            width: '100%', 
+                            borderRadius: 4,
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.12)'
+                          }} 
+                        />
+                      </Box>
+                    )}
                     
                     <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
                       {pattern.description || 'Описание паттерна будет отображаться здесь'}
