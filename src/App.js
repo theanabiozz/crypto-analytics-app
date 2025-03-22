@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Box, Button, CircularProgress } from '@mui/material';
 import './App.css';
@@ -20,6 +20,8 @@ import PatternEditor from './pages/admin/PatternEditor';
 // Сервисы и данные
 import telegramService from './services/telegramService';
 import { patternsService, favoritesService } from './services/databaseService';
+import binanceService from './services/binanceService';
+import priceUpdater from './utils/priceUpdater';
 
 // Импорт контекста аутентификации
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -60,7 +62,19 @@ const TelegramApp = () => {
   // Дата последнего обновления
   const [lastUpdate, setLastUpdate] = useState('14 марта 2025, 13:03');
 
-  // Функция обновления данных
+  // Функция обновления времени последнего обновления
+  const updateLastUpdateTime = () => {
+    setLastUpdate(new Date().toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    }) + ', ' + new Date().toLocaleTimeString('ru-RU', {
+      hour: '2-digit',
+      minute: '2-digit'
+    }));
+  };
+
+  // Функция для полного обновления данных
   const refreshData = async () => {
     console.log("Начало запроса к API...");
     setLoading(true);
@@ -81,17 +95,86 @@ const TelegramApp = () => {
         });
         
         console.log('Отсортированные данные:', sortedData);
-        setCryptoList(sortedData);
+        
+        // Обновляем цены из Binance API
+        try {
+          // Собираем все тикеры для запроса к Binance
+          const symbols = sortedData
+            .filter(crypto => crypto.ticker) // Убеждаемся, что тикер существует
+            .map(crypto => crypto.ticker.toUpperCase() + 'USDT'); // Формируем символы для Binance
+          
+          if (symbols.length > 0) {
+            console.log("Запрашиваем цены для символов:", symbols);
+            
+            // Получаем текущие цены
+            const pricesData = await binanceService.getPricesForSymbols(symbols);
+            console.log("Получены цены от Binance:", pricesData);
+            
+            // Получаем данные по изменению цены за 24ч
+            const changeData = await binanceService.get24hChangeForSymbols(symbols);
+            console.log("Получены данные по изменению цен от Binance:", changeData);
+            
+            // Обновляем данные с актуальными ценами
+            const updatedData = sortedData.map(crypto => {
+              if (!crypto.ticker) return crypto; // Пропускаем, если нет тикера
+              
+              const symbol = crypto.ticker.toUpperCase() + 'USDT';
+              const priceInfo = pricesData.find(p => p.symbol === symbol);
+              const changeInfo = changeData.find(c => c.symbol === symbol);
+              
+              // Если нашли информацию о цене, обновляем данные
+              if (priceInfo && priceInfo.price) {
+                return {
+                  ...crypto,
+                  price: parseFloat(priceInfo.price),
+                  priceChange: changeInfo && changeInfo.priceChangePercent ? 
+                    parseFloat(changeInfo.priceChangePercent) : 
+                    crypto.priceChange
+                };
+              }
+              
+              return crypto;
+            });
+            
+            console.log("Данные с обновленными ценами:", updatedData);
+            console.log("Обнаружены изменения цен, обновляем состояние");
+            setCryptoList(updatedData);
+            
+            // Инициализируем начальные данные для обновления цен
+            const initialPrices = {};
+            updatedData.forEach(crypto => {
+              if (crypto.ticker) {
+                const symbol = crypto.ticker.toUpperCase() + 'USDT';
+                initialPrices[symbol] = {
+                  price: crypto.price,
+                  priceChange: crypto.priceChange
+                };
+              }
+            });
+            
+            // Обновляем данные в модуле priceUpdater
+            if (priceUpdater.prices) {
+              Object.keys(initialPrices).forEach(symbol => {
+                priceUpdater.prices[symbol] = initialPrices[symbol];
+              });
+              // Обновляем DOM после полной загрузки данных
+              priceUpdater.updateDisplayedPrices();
+            }
+            
+            // Обновляем время последнего обновления
+            updateLastUpdateTime();
+          } else {
+            // Если нет символов для запроса, используем данные без обновления
+            setCryptoList(sortedData);
+          }
+        } catch (error) {
+          console.error("Ошибка при обновлении цен из Binance:", error);
+          // В случае ошибки используем исходные данные без обновления цен
+          setCryptoList(sortedData);
+        }
         
         // Устанавливаем дату последнего обновления
-        setLastUpdate(new Date().toLocaleDateString('ru-RU', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric'
-        }) + ', ' + new Date().toLocaleTimeString('ru-RU', {
-          hour: '2-digit',
-          minute: '2-digit'
-        }));
+        updateLastUpdateTime();
         
         // Получаем избранное из API
         const userId = 1; // Временно для демонстрации
@@ -129,16 +212,20 @@ const TelegramApp = () => {
     // Загружаем данные из API
     refreshData();
     
-    // Добавляем обработчик для ручного обновления (если понадобится)
-    const refreshInterval = setInterval(() => {
-      console.log("Запускаем автоматическое обновление данных");
-      refreshData();
-    }, 5 * 60 * 1000); // Обновление каждые 5 минут
+    // Инициализируем модуль обновления цен
+    priceUpdater.init(binanceService, updateLastUpdateTime);
     
-    // Очистка интервала при размонтировании компонента
+    // Интервал для полного обновления данных каждые 5 минут
+    const fullRefreshInterval = setInterval(() => {
+      console.log("Запускаем полное автоматическое обновление данных");
+      refreshData();
+    }, 5 * 60 * 1000); // 5 минут
+    
+    // Очистка интервалов при размонтировании компонента
     return () => {
       console.log("Компонент TelegramApp размонтирован");
-      clearInterval(refreshInterval);
+      clearInterval(fullRefreshInterval);
+      priceUpdater.stop(); // Останавливаем обновление цен
     };
   }, []);
 

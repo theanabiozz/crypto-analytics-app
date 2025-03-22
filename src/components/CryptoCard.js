@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import ChartPlaceholder from './ChartPlaceholder';
 
-// Форматирование цены в зависимости от значения
+// Форматирование цены для начального рендеринга
 const formatPrice = (price) => {
   // Преобразуем в число, если price не является числом
   const numPrice = parseFloat(price);
@@ -11,15 +11,27 @@ const formatPrice = (price) => {
     return "0.00"; // Значение по умолчанию, если price невалидный
   }
   
-  if (numPrice < 0.001) {
+  if (numPrice < 0.0001) {
     return numPrice.toFixed(8);
+  } else if (numPrice < 0.01) {
+    return numPrice.toFixed(6);
   } else if (numPrice < 1) {
     return numPrice.toFixed(4);
   } else if (numPrice < 100) {
     return numPrice.toFixed(2);
-  } else {
+  } else if (numPrice < 10000) {
     return numPrice.toLocaleString('ru-RU', { maximumFractionDigits: 2 });
+  } else {
+    return numPrice.toLocaleString('ru-RU', { maximumFractionDigits: 0 });
   }
+};
+
+// Функция сравнения для memo - игнорируем изменения цены
+const arePropsEqual = (prevProps, nextProps) => {
+  return (
+    prevProps.crypto.id === nextProps.crypto.id &&
+    prevProps.isFavorite === nextProps.isFavorite
+  );
 };
 
 const CryptoCard = ({ crypto, isFavorite, onToggleFavorite }) => {
@@ -54,6 +66,9 @@ const CryptoCard = ({ crypto, isFavorite, onToggleFavorite }) => {
   // Определение класса для типа паттерна
   const patternClass = patternType === 'bullish' ? 'bullish' : 
                       patternType === 'bearish' ? 'bearish' : 'neutral';
+                      
+  // Создаем уникальный идентификатор для обновления цены
+  const priceSymbol = ticker ? `${ticker.toUpperCase()}USDT` : '';
 
   return (
     <div className="crypto-card">
@@ -65,9 +80,15 @@ const CryptoCard = ({ crypto, isFavorite, onToggleFavorite }) => {
             <span className="coin-ticker">{ticker || '???'}</span>
           </div>
         </div>
-        <div className="price-info">
-          <div className="coin-price">${formatPrice(price)}</div>
-          <span className={`price-change ${priceChangeClass}`}>
+        <div 
+          className="price-info"
+          data-price-container
+          data-symbol={priceSymbol}
+        >
+          <div className="coin-price js-crypto-price">
+            ${formatPrice(price)}
+          </div>
+          <span className={`price-change ${priceChangeClass} js-crypto-change`}>
             {priceChangeSign}{formatPrice(Math.abs(parseFloat(priceChange)))}%
           </span>
         </div>
@@ -128,4 +149,5 @@ const CryptoCard = ({ crypto, isFavorite, onToggleFavorite }) => {
   );
 };
 
-export default CryptoCard;
+// Экспортируем мемоизированный компонент
+export default memo(CryptoCard, arePropsEqual);
