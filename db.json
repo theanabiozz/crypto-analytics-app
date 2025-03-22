@@ -1,0 +1,115 @@
+{
+  "patterns": [
+    {
+      "id": "bdx",
+      "name": "Beldex",
+      "ticker": "BDX",
+      "price": 0.0754,
+      "priceChange": 0.82,
+      "patternType": "bullish",
+      "patternName": "Сопротивление (Приближение)",
+      "patternLabel": "Сопротивление",
+      "description": "Определен уровень сопротивления 0.0805 на 14 марта. Потенциальный бычий прорыв возможен при формировании паттерна.",
+      "levels": {
+        "resistance": "0.15",
+        "potential": "54",
+        "timeframe": "16 дней",
+        "support": "0.04"
+      },
+      "status": "published",
+      "createdAt": "2025-03-14T13:03:00Z",
+      "updatedAt": "2025-03-22T08:59:38.169Z",
+      "title": "Bitcoin BTC"
+    },
+    {
+      "id": "paxg",
+      "name": "PAX Gold",
+      "ticker": "PAXG",
+      "price": 3017.16,
+      "priceChange": 0.43,
+      "patternType": "bullish",
+      "patternName": "Прорыв сопротивления",
+      "patternLabel": "Прорыв уровня",
+      "description": "Пробой уровня сопротивления 2,958.2824 на 14 марта. Возможно бычье движение цены в ближайшие 8 дней.",
+      "levels": {
+        "resistance": 2958.28,
+        "potential": 1.38,
+        "timeframe": "8 дней"
+      },
+      "status": "published",
+      "createdAt": "2025-03-14T13:03:00Z",
+      "updatedAt": "2025-03-14T13:03:00Z"
+    },
+    {
+      "id": "etherium-eth",
+      "title": "Etherium ETH",
+      "description": "Описание паттерна",
+      "patternType": "bullish",
+      "patternLabel": "Разворот тренда",
+      "status": "draft",
+      "levels": {
+        "resistance": "2990",
+        "support": "1990",
+        "potential": "14",
+        "timeframe": "6 дней"
+      },
+      "updatedAt": "2025-03-22T09:00:31.289Z",
+      "createdAt": "2025-03-22T09:00:31.289Z"
+    },
+    {
+      "id": "eth",
+      "title": "ETH",
+      "description": "Описание паттерна",
+      "patternType": "bullish",
+      "patternLabel": "Разворот тренда",
+      "status": "published",
+      "levels": {
+        "resistance": "2990",
+        "support": "3900",
+        "potential": "13",
+        "timeframe": "16 дней"
+      },
+      "updatedAt": "2025-03-22T09:03:34.587Z",
+      "createdAt": "2025-03-22T09:03:34.587Z"
+    },
+    {
+      "id": "-",
+      "title": "Бычий клин",
+      "name": "Solana",
+      "ticker": "SOL",
+      "price": "121.20",
+      "priceChange": "16",
+      "description": "Описание паттерна будет сдесь позже.",
+      "patternType": "bullish",
+      "patternName": "Бычий клин",
+      "patternLabel": "Разворот тренда",
+      "status": "published",
+      "levels": {
+        "resistance": "133.40",
+        "support": "127.18",
+        "potential": "4.02",
+        "timeframe": "3 дня"
+      },
+      "updatedAt": "2025-03-22T09:45:04.298Z",
+      "createdAt": "2025-03-22T09:12:36.651Z"
+    }
+  ],
+  "users": [
+    {
+      "id": "1",
+      "username": "admin",
+      "email": "admin@cryptopatterns.xyz",
+      "password": "admin123",
+      "role": "admin",
+      "createdAt": "2025-03-01T00:00:00Z"
+    }
+  ],
+  "favorites": [
+    {
+      "id": "8b6d",
+      "userId": 1,
+      "patternId": "-",
+      "createdAt": "2025-03-22T09:30:42.463Z"
+    }
+  ]
+}

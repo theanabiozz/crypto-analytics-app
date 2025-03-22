@@ -15,7 +15,8 @@ import {
   Divider,
   Alert,
   Card,
-  CardContent
+  CardContent,
+  Snackbar
 } from '@mui/material';
 import {
   Save as SaveIcon,
@@ -23,7 +24,8 @@ import {
   ArrowBack as ArrowBackIcon
 } from '@mui/icons-material';
 import AdminLayout from '../../components/admin/AdminLayout';
-import localStorageService from '../../services/localStorageService';
+// Заменяем импорт localStorageService на patternsService
+import { patternsService } from '../../services/databaseService';
 
 const PatternEditor = () => {
   const { id } = useParams();
@@ -38,8 +40,13 @@ const PatternEditor = () => {
   // Состояние формы
   const [pattern, setPattern] = useState({
     title: '',
+    name: '', // Название криптовалюты
+    ticker: '', // Тикер криптовалюты
+    price: '', // Цена
+    priceChange: '', // Изменение цены в процентах
     description: '',
     patternType: 'bullish', // bullish, bearish, neutral
+    patternName: '', // Название паттерна
     patternLabel: '',
     status: 'draft', // draft, published
     levels: {
@@ -55,23 +62,24 @@ const PatternEditor = () => {
     if (!isNewPattern) {
       const loadPattern = async () => {
         try {
-          // Загружаем паттерны из localStorage
-          const patterns = localStorageService.getPatterns();
-          // Ищем нужный паттерн по id
-          const foundPattern = patterns.find(p => p.id === id);
+          // Загружаем паттерн из API вместо localStorage
+          const response = await patternsService.getById(id);
           
-          if (foundPattern) {
-            setPattern(foundPattern);
+          if (response && response.data) {
+            console.log('Загружен паттерн из API:', response.data);
+            setPattern(response.data);
           } else {
             // Если паттерн не найден, показываем ошибку
+            console.error('Паттерн не найден в API');
             alert('Паттерн не найден');
             navigate('/admin/content?type=patterns');
           }
           
           setLoading(false);
         } catch (error) {
-          console.error('Error loading pattern:', error);
+          console.error('Ошибка при загрузке паттерна:', error);
           setLoading(false);
+          setSaveError('Ошибка при загрузке паттерна. Пожалуйста, попробуйте еще раз.');
         }
       };
       
@@ -109,27 +117,37 @@ const PatternEditor = () => {
     setSaveError('');
     
     try {
-      // Загружаем текущие паттерны
-      const patterns = localStorageService.getPatterns();
+      // Подготавливаем данные паттерна для сохранения
+      const patternData = {
+        ...pattern,
+        updatedAt: new Date().toISOString()
+      };
+      
+      // Убедимся что title содержит название паттерна
+      if (!patternData.patternName) {
+        patternData.patternName = patternData.title;
+      }
+      
+      console.log('Данные для сохранения:', patternData);
       
       if (isNewPattern) {
         // Создаем новый паттерн
-        const newPattern = {
-          ...pattern,
-          id: pattern.title.toLowerCase().replace(/\s+/g, '-'),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+        // Генерируем ID из названия (slug)
+        const patternId = pattern.title
+          .toLowerCase()
+          .replace(/[^\w\s]/g, '')
+          .replace(/\s+/g, '-');
+        
+        const newPatternData = {
+          ...patternData,
+          id: patternId,
+          createdAt: new Date().toISOString()
         };
         
-        // Добавляем новый паттерн в список и сохраняем
-        localStorageService.savePatterns([...patterns, newPattern]);
+        console.log('Создание нового паттерна:', newPatternData);
+        await patternsService.create(newPatternData);
         
-        // Триггерим событие для обновления данных
-        window.dispatchEvent(new Event('storage'));
-        
-        // Показываем сообщение об успехе
         setSaveSuccess(true);
-        setSaving(false);
         
         // Перенаправляем на страницу со списком паттернов
         setTimeout(() => {
@@ -137,25 +155,15 @@ const PatternEditor = () => {
         }, 1500);
       } else {
         // Обновляем существующий паттерн
-        const updatedPatterns = patterns.map(p => 
-          p.id === id ? { 
-            ...pattern, 
-            updatedAt: new Date().toISOString()
-          } : p
-        );
-        
-        // Сохраняем обновленный список
-        localStorageService.savePatterns(updatedPatterns);
-        
-        // Триггерим событие для обновления данных
-        window.dispatchEvent(new Event('storage'));
+        console.log('Обновление существующего паттерна:', id, patternData);
+        await patternsService.update(id, patternData);
         
         setSaveSuccess(true);
-        setSaving(false);
       }
     } catch (error) {
-      console.error('Error saving pattern:', error);
+      console.error('Ошибка при сохранении паттерна:', error);
       setSaveError('Произошла ошибка при сохранении. Пожалуйста, попробуйте еще раз.');
+    } finally {
       setSaving(false);
     }
   };
@@ -167,22 +175,14 @@ const PatternEditor = () => {
     }
     
     try {
-      // Загружаем текущие паттерны
-      const patterns = localStorageService.getPatterns();
-      
-      // Удаляем паттерн из списка
-      const updatedPatterns = patterns.filter(p => p.id !== id);
-      
-      // Сохраняем обновленный список
-      localStorageService.savePatterns(updatedPatterns);
-      
-      // Триггерим событие для обновления данных
-      window.dispatchEvent(new Event('storage'));
+      // Удаляем паттерн через API
+      console.log('Удаление паттерна:', id);
+      await patternsService.delete(id);
       
       // Перенаправляем на страницу со списком паттернов
       navigate('/admin/content?type=patterns');
     } catch (error) {
-      console.error('Error deleting pattern:', error);
+      console.error('Ошибка при удалении паттерна:', error);
       alert('Произошла ошибка при удалении паттерна');
     }
   };
@@ -259,26 +259,98 @@ const PatternEditor = () => {
           <Grid container spacing={3}>
             {/* Левая колонка - основная информация */}
             <Grid item xs={12} md={8}>
+              {/* Информация о криптовалюте */}
               <Paper sx={{ p: 3, mb: 3 }}>
                 <Typography variant="h6" gutterBottom>
-                  Основная информация
+                  Информация о криптовалюте
+                </Typography>
+                <Divider sx={{ mb: 3 }} />
+                
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Название криптовалюты"
+                      name="name"
+                      value={pattern.name || ''}
+                      onChange={handleChange}
+                      fullWidth
+                      required
+                      sx={{ mb: 3 }}
+                      placeholder="Например: Bitcoin"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Тикер"
+                      name="ticker"
+                      value={pattern.ticker || ''}
+                      onChange={handleChange}
+                      fullWidth
+                      required
+                      sx={{ mb: 3 }}
+                      placeholder="Например: BTC"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Цена ($)"
+                      name="price"
+                      type="number"
+                      inputProps={{ step: "0.00000001" }}
+                      value={pattern.price || ''}
+                      onChange={handleChange}
+                      fullWidth
+                      required
+                      sx={{ mb: 3 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      label="Изменение цены (%)"
+                      name="priceChange"
+                      type="number"
+                      inputProps={{ step: "0.01" }}
+                      value={pattern.priceChange || ''}
+                      onChange={handleChange}
+                      fullWidth
+                      required
+                      sx={{ mb: 3 }}
+                    />
+                  </Grid>
+                </Grid>
+              </Paper>
+
+              {/* Информация о паттерне */}
+              <Paper sx={{ p: 3, mb: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                  Информация о паттерне
                 </Typography>
                 <Divider sx={{ mb: 3 }} />
                 
                 <TextField
                   label="Название паттерна"
                   name="title"
-                  value={pattern.title}
+                  value={pattern.title || ''}
                   onChange={handleChange}
                   fullWidth
                   required
                   sx={{ mb: 3 }}
                 />
+
+                <TextField
+                  label="Отображаемое название паттерна"
+                  name="patternName"
+                  value={pattern.patternName || pattern.title || ''}
+                  onChange={handleChange}
+                  fullWidth
+                  sx={{ mb: 3 }}
+                  placeholder="Оставьте пустым, чтобы использовать основное название"
+                />
                 
                 <TextField
                   label="Описание"
                   name="description"
-                  value={pattern.description}
+                  value={pattern.description || ''}
                   onChange={handleChange}
                   fullWidth
                   multiline
@@ -292,7 +364,7 @@ const PatternEditor = () => {
                       <InputLabel>Тип паттерна</InputLabel>
                       <Select
                         name="patternType"
-                        value={pattern.patternType}
+                        value={pattern.patternType || 'bullish'}
                         onChange={handleChange}
                         label="Тип паттерна"
                       >
@@ -306,7 +378,7 @@ const PatternEditor = () => {
                     <TextField
                       label="Метка паттерна"
                       name="patternLabel"
-                      value={pattern.patternLabel}
+                      value={pattern.patternLabel || ''}
                       onChange={handleChange}
                       fullWidth
                       sx={{ mb: 3 }}
@@ -328,38 +400,43 @@ const PatternEditor = () => {
                     <TextField
                       label="Уровень сопротивления"
                       name="levels.resistance"
-                      value={pattern.levels.resistance}
+                      value={pattern.levels?.resistance || ''}
                       onChange={handleChange}
                       fullWidth
                       sx={{ mb: 3 }}
+                      type="number"
+                      inputProps={{ step: "0.0001" }}
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <TextField
                       label="Уровень поддержки"
                       name="levels.support"
-                      value={pattern.levels.support}
+                      value={pattern.levels?.support || ''}
                       onChange={handleChange}
                       fullWidth
                       sx={{ mb: 3 }}
+                      type="number"
+                      inputProps={{ step: "0.0001" }}
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <TextField
                       label="Потенциал (в %)"
                       name="levels.potential"
-                      value={pattern.levels.potential}
+                      value={pattern.levels?.potential || ''}
                       onChange={handleChange}
                       fullWidth
                       sx={{ mb: 3 }}
                       type="number"
+                      inputProps={{ step: "0.01" }}
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <TextField
                       label="Временной интервал"
                       name="levels.timeframe"
-                      value={pattern.levels.timeframe}
+                      value={pattern.levels?.timeframe || ''}
                       onChange={handleChange}
                       fullWidth
                       sx={{ mb: 3 }}
@@ -382,7 +459,7 @@ const PatternEditor = () => {
                   <InputLabel>Статус</InputLabel>
                   <Select
                     name="status"
-                    value={pattern.status}
+                    value={pattern.status || 'draft'}
                     onChange={handleChange}
                     label="Статус"
                   >
@@ -409,7 +486,7 @@ const PatternEditor = () => {
                     }}
                   >
                     <Typography variant="subtitle1" fontWeight="bold">
-                      {pattern.title || 'Название паттерна'}
+                      {pattern.name || 'Название криптовалюты'} {pattern.ticker ? `${pattern.ticker}` : ''}
                     </Typography>
                     
                     <Box 
@@ -444,10 +521,10 @@ const PatternEditor = () => {
                       {pattern.description || 'Описание паттерна будет отображаться здесь'}
                     </Typography>
                     
-                    {(pattern.levels.resistance || pattern.levels.support || 
-                      pattern.levels.potential || pattern.levels.timeframe) && (
+                    {(pattern.levels?.resistance || pattern.levels?.support || 
+                      pattern.levels?.potential || pattern.levels?.timeframe) && (
                       <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        {pattern.levels.resistance && (
+                        {pattern.levels?.resistance && (
                           <Box sx={{ 
                             p: 1, 
                             bgcolor: 'background.default',
@@ -464,7 +541,7 @@ const PatternEditor = () => {
                           </Box>
                         )}
                         
-                        {pattern.levels.support && (
+                        {pattern.levels?.support && (
                           <Box sx={{ 
                             p: 1, 
                             bgcolor: 'background.default',
@@ -481,7 +558,7 @@ const PatternEditor = () => {
                           </Box>
                         )}
                         
-                        {pattern.levels.potential && (
+                        {pattern.levels?.potential && (
                           <Box sx={{ 
                             p: 1, 
                             bgcolor: 'background.default',
@@ -502,7 +579,7 @@ const PatternEditor = () => {
                           </Box>
                         )}
                         
-                        {pattern.levels.timeframe && (
+                        {pattern.levels?.timeframe && (
                           <Box sx={{ 
                             p: 1, 
                             bgcolor: 'background.default',

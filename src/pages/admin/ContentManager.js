@@ -21,7 +21,10 @@ import {
   DialogContentText,
   DialogTitle,
   TextField,
-  InputAdornment
+  InputAdornment,
+  Chip,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -30,8 +33,8 @@ import {
   Search as SearchIcon
 } from '@mui/icons-material';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { contentService, patternsService } from '../../services/api.service';
-import localStorageService from '../../services/localStorageService';
+// Заменяем импорт на databaseService вместо api.service и localStorageService
+import { patternsService } from '../../services/databaseService';
 
 // Компонент панели с вкладками для разных типов контента
 const ContentTabs = ({ value, onChange }) => {
@@ -64,6 +67,11 @@ const ContentManager = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
 
   // Эффект загрузки данных при изменении типа контента
   useEffect(() => {
@@ -76,48 +84,32 @@ const ContentManager = () => {
   const fetchContent = async () => {
     setLoading(true);
     try {
-      // Загрузка данных из localStorage в зависимости от типа контента
-      let data = [];
-      
       if (contentType === 'patterns') {
-        data = localStorageService.getPatterns();
-      } else if (contentType === 'articles') {
-        data = localStorageService.getArticles();
+        // Загрузка паттернов из API
+        console.log('Загрузка паттернов из API');
+        const response = await patternsService.getAll();
+        console.log('Полученные паттерны:', response.data);
+        setItems(response.data || []);
       } else {
-        data = localStorageService.getEducational();
-      }
-      
-      setItems(data);
-      setLoading(false);
-      
-      // Оставляем код для заглушки, если localStorageService недоступен или пуст
-      if (data.length === 0) {
+        // Для других типов контента временно используем демо-данные
+        console.log('Загрузка демо-данных для', contentType);
         setTimeout(() => {
-          if (contentType === 'patterns') {
-            setItems(demoPatterns);
-          } else if (contentType === 'articles') {
+          if (contentType === 'articles') {
             setItems(demoArticles);
           } else {
             setItems(demoEducational);
           }
           setLoading(false);
-        }, 1000);
+        }, 500);
       }
-      
-      // Для реального API раскомментируйте код ниже
-      /*
-      let response;
-      
-      if (contentType === 'patterns') {
-        response = await patternsService.getAll();
-      } else {
-        response = await contentService.getAll(contentType);
-      }
-      
-      setItems(response.data || []);
-      */
     } catch (error) {
-      console.error(`Error fetching ${contentType}:`, error);
+      console.error(`Ошибка загрузки ${contentType}:`, error);
+      setSnackbar({
+        open: true,
+        message: `Не удалось загрузить данные. ${error.message}`,
+        severity: 'error'
+      });
+    } finally {
       setLoading(false);
     }
   };
@@ -134,8 +126,10 @@ const ContentManager = () => {
 
   // Фильтрация элементов по поисковому запросу
   const filteredItems = items.filter(item => 
-    item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    (item.title || item.patternName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (item.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (item.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (item.ticker || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Обработчики удаления элемента
@@ -148,33 +142,30 @@ const ContentManager = () => {
     if (!itemToDelete) return;
     
     try {
-      // Удаляем элемент из списка
-      const updatedItems = items.filter(item => item.id !== itemToDelete.id);
-      setItems(updatedItems);
-      
-      // Сохраняем обновленный список в localStorage
-      if (contentType === 'patterns') {
-        localStorageService.savePatterns(updatedItems);
-      } else if (contentType === 'articles') {
-        localStorageService.saveArticles(updatedItems);
-      } else {
-        localStorageService.saveEducational(updatedItems);
-      }
-      
-      setDeleteDialogOpen(false);
-      setItemToDelete(null);
-      
-      // Для реального API
-      /*
       if (contentType === 'patterns') {
         await patternsService.delete(itemToDelete.id);
-      } else {
-        await contentService.delete(itemToDelete.id);
-      }
+        console.log('Паттерн удален:', itemToDelete.id);
+      } 
+      // В будущем здесь можно добавить обработку других типов контента
+      
+      setSnackbar({
+        open: true,
+        message: 'Элемент успешно удален',
+        severity: 'success'
+      });
+      
+      // Обновляем список после удаления
       fetchContent();
-      */
     } catch (error) {
-      console.error(`Error deleting ${contentType} item:`, error);
+      console.error(`Ошибка удаления ${contentType}:`, error);
+      setSnackbar({
+        open: true,
+        message: 'Ошибка при удалении элемента',
+        severity: 'error'
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setItemToDelete(null);
     }
   };
 
@@ -183,8 +174,13 @@ const ContentManager = () => {
     setItemToDelete(null);
   };
 
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
   // Функция для форматирования даты
   const formatDate = (dateString) => {
+    if (!dateString) return 'Нет данных';
     return new Date(dateString).toLocaleDateString('ru-RU', {
       year: 'numeric',
       month: 'short',
@@ -193,33 +189,6 @@ const ContentManager = () => {
   };
 
   // Демо данные для разработки
-  const demoPatterns = [
-    {
-      id: 1,
-      title: 'Double Top',
-      description: 'Разворотный паттерн, указывающий на потенциальную смену тренда с восходящего на нисходящий.',
-      status: 'published',
-      createdAt: '2023-03-15T10:30:00Z',
-      updatedAt: '2023-03-16T14:20:00Z'
-    },
-    {
-      id: 2,
-      title: 'Head and Shoulders',
-      description: 'Классический разворотный паттерн, сигнализирующий о смене тренда.',
-      status: 'published',
-      createdAt: '2023-03-14T09:15:00Z',
-      updatedAt: '2023-03-14T11:45:00Z'
-    },
-    {
-      id: 3,
-      title: 'Bull Flag',
-      description: 'Продолжение тренда, указывающее на продолжение бычьего движения после консолидации.',
-      status: 'draft',
-      createdAt: '2023-03-13T14:45:00Z',
-      updatedAt: '2023-03-13T16:30:00Z'
-    }
-  ];
-
   const demoArticles = [
     {
       id: 1,
@@ -281,6 +250,33 @@ const ContentManager = () => {
         return `/admin/patterns/${item.id}`;
       default:
         return `/admin/content/${item.id}?type=${contentType}`;
+    }
+  };
+
+  // Получение названия элемента
+  const getItemTitle = (item) => {
+    if (contentType === 'patterns') {
+      if (item.name && item.ticker) {
+        return `${item.name} (${item.ticker})`;
+      } else if (item.patternName) {
+        return item.patternName;
+      }
+    }
+    return item.title || 'Без названия';
+  };
+
+  // Получение описания элемента
+  const getItemDescription = (item) => {
+    const description = item.description || '';
+    return description.length > 100 ? `${description.substring(0, 100)}...` : description;
+  };
+
+  // Визуальное отображение статуса
+  const renderStatus = (status) => {
+    if (status === 'published') {
+      return <Chip label="Опубликован" color="success" size="small" />;
+    } else {
+      return <Chip label="Черновик" color="default" size="small" />;
     }
   };
 
@@ -354,16 +350,16 @@ const ContentManager = () => {
               </TableHead>
               <TableBody>
                 {filteredItems.map(item => (
-                  <TableRow key={item.id} hover>
-                    <TableCell>{item.title}</TableCell>
-                    <TableCell>
-                      {item.description && item.description.length > 100
-                        ? `${item.description.substring(0, 100)}...`
-                        : item.description}
-                    </TableCell>
-                    <TableCell>
-                      {item.status === 'published' ? 'Опубликован' : 'Черновик'}
-                    </TableCell>
+                  <TableRow 
+                    key={item.id} 
+                    hover
+                    sx={{
+                      backgroundColor: item.status === 'draft' ? 'rgba(0, 0, 0, 0.04)' : 'inherit'
+                    }}
+                  >
+                    <TableCell>{getItemTitle(item)}</TableCell>
+                    <TableCell>{getItemDescription(item)}</TableCell>
+                    <TableCell>{renderStatus(item.status)}</TableCell>
                     <TableCell>{formatDate(item.createdAt)}</TableCell>
                     <TableCell>{formatDate(item.updatedAt)}</TableCell>
                     <TableCell align="right">
@@ -371,6 +367,7 @@ const ContentManager = () => {
                         color="primary"
                         onClick={() => navigate(getEditUrl(item))}
                         size="small"
+                        title="Редактировать"
                       >
                         <EditIcon />
                       </IconButton>
@@ -378,6 +375,7 @@ const ContentManager = () => {
                         color="error"
                         onClick={() => handleDeleteClick(item)}
                         size="small"
+                        title="Удалить"
                       >
                         <DeleteIcon />
                       </IconButton>
@@ -402,7 +400,7 @@ const ContentManager = () => {
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            Вы уверены, что хотите удалить "{itemToDelete?.title}"? Это действие нельзя отменить.
+            Вы уверены, что хотите удалить "{getItemTitle(itemToDelete || {})}"? Это действие нельзя отменить.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -414,6 +412,22 @@ const ContentManager = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Уведомление */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity} 
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </AdminLayout>
   );
 };
