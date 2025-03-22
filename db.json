@@ -62,22 +62,6 @@
       "patternName": "Etherium ETH"
     },
     {
-      "id": "eth",
-      "title": "ETH",
-      "description": "Описание паттерна",
-      "patternType": "bullish",
-      "patternLabel": "Разворот тренда",
-      "status": "published",
-      "levels": {
-        "resistance": "2990",
-        "support": "3900",
-        "potential": "13",
-        "timeframe": "16 дней"
-      },
-      "updatedAt": "2025-03-22T09:03:34.587Z",
-      "createdAt": "2025-03-22T09:03:34.587Z"
-    },
-    {
       "id": "-",
       "title": "Бычий клин",
       "name": "Solana",
