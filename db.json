@@ -46,15 +46,20 @@
       "description": "Описание паттерна",
       "patternType": "bullish",
       "patternLabel": "Разворот тренда",
-      "status": "draft",
+      "status": "published",
       "levels": {
         "resistance": "2990",
         "support": "1990",
         "potential": "14",
         "timeframe": "6 дней"
       },
-      "updatedAt": "2025-03-22T09:00:31.289Z",
-      "createdAt": "2025-03-22T09:00:31.289Z"
+      "updatedAt": "2025-03-22T10:14:15.308Z",
+      "createdAt": "2025-03-22T09:00:31.289Z",
+      "name": "Etherium",
+      "ticker": "ETH",
+      "price": "2438",
+      "priceChange": "19.23",
+      "patternName": "Etherium ETH"
     },
     {
       "id": "eth",

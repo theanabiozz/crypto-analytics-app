@@ -74,7 +74,14 @@ const TelegramApp = () => {
       
       if (response && response.data) {
         console.log('Данные из API:', response.data);
-        setCryptoList(response.data);
+        
+        // Сортируем данные по дате обновления (новые вверху)
+        const sortedData = [...response.data].sort((a, b) => {
+          return new Date(b.updatedAt) - new Date(a.updatedAt);
+        });
+        
+        console.log('Отсортированные данные:', sortedData);
+        setCryptoList(sortedData);
         
         // Устанавливаем дату последнего обновления
         setLastUpdate(new Date().toLocaleDateString('ru-RU', {
