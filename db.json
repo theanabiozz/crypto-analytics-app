@@ -93,12 +93,5 @@
       "createdAt": "2025-03-01T00:00:00Z"
     }
   ],
-  "favorites": [
-    {
-      "id": "bc7a",
-      "userId": 1,
-      "patternId": "etherium-eth",
-      "createdAt": "2025-03-22T10:57:54.915Z"
-    }
-  ]
+  "favorites": []
 }

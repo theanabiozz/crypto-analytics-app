@@ -2,7 +2,6 @@
     "name": "crypto-analytics-app",
     "version": "0.1.0",
     "private": true,
-    "proxy": "http://localhost:3001",
     "dependencies": {
         "@emotion/react": "^11.14.0",
         "@emotion/styled": "^11.14.0",
@@ -26,8 +25,8 @@
         "build": "react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject",
-        "server": "json-server --watch db.json --port 3001 --delay 300",
-        "dev": "npm run server & npm start"
+        "server": "node server.js",
+        "dev": "concurrently --kill-others \"npm run server\" \"sleep 5 && npm start\""
     },
     "eslintConfig": {
         "extends": [
@@ -49,6 +48,7 @@
     },
     "devDependencies": {
         "concurrently": "^9.1.2",
-        "json-server": "^1.0.0-beta.3"
+        "cors": "^2.8.5",
+        "json-server": "^0.17.4"
     }
 }

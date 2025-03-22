@@ -1,8 +1,8 @@
 // src/services/databaseService.js
 import axios from 'axios';
 
-// Базовый URL API - в разработке используем JSON Server
-const API_URL = process.env.REACT_APP_API_URL || '';
+// Базовый URL API - явно указываем адрес JSON Server
+const API_URL = 'http://localhost:3001';
 
 // Создаем экземпляр axios с базовым URL
 const apiClient = axios.create({
