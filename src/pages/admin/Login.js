@@ -11,7 +11,7 @@ import {
   CircularProgress
 } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
-import { authService } from '../../services/api.service';
+import axios from 'axios'; // Импортируем axios напрямую
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -28,34 +28,27 @@ const Login = () => {
     setLoading(true);
     
     try {
-      // Для демонстрации и разработки, используем заглушку
-      // В реальном приложении раскомментируйте и используйте authService.login
+      // Используем реальную аутентификацию вместо имитации
+      const response = await axios.post('http://localhost:3001/api/auth/login', { 
+        username, 
+        password 
+      });
       
-      // Имитируем успешный вход для разработки
-      setTimeout(() => {
-        // Тестовые данные для разработки
-        const fakeResponse = {
-          data: {
-            token: 'fake-jwt-token',
-            user: { id: 1, username: username, role: 'admin' }
-          }
-        };
-        
-        login(fakeResponse.data.token, fakeResponse.data.user);
+      console.log('Ответ при входе:', response.data);
+      
+      // Проверяем, что сервер вернул токен и данные пользователя
+      if (response.data && response.data.token) {
+        // Сохраняем токен и данные пользователя
+        login(response.data.token, response.data.user);
+        // Перенаправляем на админ-панель
         navigate('/admin');
-      }, 1000);
-      
-      // Раскомментируйте для реального API
-      /*
-      const response = await authService.login({ username, password });
-      login(response.data.token, response.data.user);
-      navigate('/admin');
-      */
+      } else {
+        throw new Error('Токен аутентификации не получен');
+      }
     } catch (err) {
-      console.error('Login error:', err);
-      setError(err.response?.data?.message || 'Ошибка входа');
-    } finally {
-      // setLoading(false); // Для реального API
+      console.error('Ошибка при входе:', err);
+      setError(err.response?.data?.message || 'Ошибка входа. Проверьте логин и пароль.');
+      setLoading(false);
     }
   };
 

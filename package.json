@@ -11,9 +11,14 @@
         "@testing-library/react": "^13.4.0",
         "@testing-library/user-event": "^13.5.0",
         "axios": "^1.8.4",
+        "bcryptjs": "^2.4.3",
         "chart.js": "^4.4.8",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.7",
         "express": "^4.21.2",
+        "jsonwebtoken": "^9.0.2",
         "jwt-decode": "^4.0.0",
+        "mongoose": "^8.12.2",
         "multer": "^1.4.5-lts.2",
         "react": "^18.2.0",
         "react-chartjs-2": "^5.3.0",
@@ -23,12 +28,14 @@
         "web-vitals": "^2.1.4"
     },
     "scripts": {
-        "start": "react-scripts start",
+        "start": "PORT=3000 react-scripts start",
+        "start-windows": "set PORT=3000 && react-scripts start",
         "build": "react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject",
         "server": "node server.js",
-        "dev": "concurrently --kill-others \"npm run server\" \"sleep 5 && npm start\""
+        "dev": "concurrently --kill-others \"npm run server\" \"sleep 2 && npm start\"",
+        "dev-windows": "concurrently --kill-others \"npm run server\" \"timeout /t 2 && npm run start-windows\""
     },
     "eslintConfig": {
         "extends": [
@@ -49,8 +56,7 @@
         ]
     },
     "devDependencies": {
-        "concurrently": "^9.1.2",
-        "cors": "^2.8.5",
-        "json-server": "^0.17.4"
-    }
+        "concurrently": "^9.1.2"
+    },
+    "proxy": "http://localhost:3001"
 }

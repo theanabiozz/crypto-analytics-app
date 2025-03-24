@@ -1,10 +1,11 @@
 // src/services/databaseService.js
 import axios from 'axios';
 
-// Базовый URL API - явно указываем адрес JSON Server
-const API_URL = 'http://localhost:3001';
+// Базовый URL API - используем абсолютный URL вместо относительного
+const API_URL = 'http://localhost:3001/api';
+
 // URL для хранения загруженных изображений
-const UPLOAD_URL = 'http://localhost:3001/uploads'; // В реальном проекте будет другой путь
+const UPLOAD_URL = 'http://localhost:3001/uploads'; // Используем абсолютный путь
 
 // Создаем экземпляр axios с базовым URL
 const apiClient = axios.create({
@@ -16,7 +17,7 @@ const apiClient = axios.create({
 
 // Создаем отдельный экземпляр axios для загрузки файлов
 const uploadClient = axios.create({
-  baseURL: API_URL,
+  baseURL: 'http://localhost:3001', // Базовый URL без /api для пути /upload
   headers: {
     'Content-Type': 'multipart/form-data'
   }
@@ -26,12 +27,19 @@ const uploadClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
+    console.log('Перехватчик apiClient: Токен из localStorage:', token ? 'Токен получен' : 'Токен отсутствует');
+    
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
+      console.log('Добавлен заголовок Authorization:', `Bearer ${token.substring(0, 10)}...`);
+    } else {
+      console.warn('Токен отсутствует, запрос будет отправлен без аутентификации');
     }
+    
     return config;
   },
   (error) => {
+    console.error('Ошибка в перехватчике запроса apiClient:', error);
     return Promise.reject(error);
   }
 );
@@ -40,12 +48,32 @@ apiClient.interceptors.request.use(
 uploadClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
+    console.log('Перехватчик uploadClient: Токен из localStorage:', token ? 'Токен получен' : 'Токен отсутствует');
+    
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
+      console.log('Добавлен заголовок Authorization в uploadClient');
+    } else {
+      console.warn('Токен отсутствует, запрос загрузки будет отправлен без аутентификации');
     }
+    
     return config;
   },
   (error) => {
+    console.error('Ошибка в перехватчике запроса uploadClient:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Добавим перехватчики ответов для отслеживания ошибок аутентификации
+apiClient.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (error.response && error.response.status === 403) {
+      console.error('Ошибка аутентификации 403:', error.response.data);
+    }
     return Promise.reject(error);
   }
 );
@@ -53,22 +81,28 @@ uploadClient.interceptors.request.use(
 // Сервис для работы с криптовалютными паттернами
 export const patternsService = {
   getAll: async () => {
+    console.log('Запрос на получение всех паттернов');
     return apiClient.get('/patterns');
   },
   getById: async (id) => {
+    console.log(`Запрос на получение паттерна по ID: ${id}`);
     return apiClient.get(`/patterns/${id}`);
   },
   create: async (data) => {
+    console.log('Запрос на создание паттерна:', data);
     return apiClient.post('/patterns', data);
   },
   update: async (id, data) => {
+    console.log(`Запрос на обновление паттерна ${id}:`, data);
     return apiClient.put(`/patterns/${id}`, data);
   },
   delete: async (id) => {
+    console.log(`Запрос на удаление паттерна ${id}`);
     return apiClient.delete(`/patterns/${id}`);
   },
   // Получение паттернов для пользовательского интерфейса
   getUserPatterns: async () => {
+    console.log('Запрос на получение опубликованных паттернов');
     const params = { 
       status: 'published',
       _sort: 'updatedAt',
@@ -81,8 +115,13 @@ export const patternsService = {
     console.log('Начало загрузки изображения...');
     
     try {
-      // В режиме разработки используем реальную загрузку файла через API
-      // вместо имитации для демонстрации
+      // Убедимся, что токен установлен перед загрузкой
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.warn('Предупреждение: Токен отсутствует при попытке загрузки изображения');
+      }
+      
+      // Используем реальную загрузку файла через API
       const response = await uploadClient.post('/upload', formData);
       console.log('Ответ от сервера при загрузке изображения:', response.data);
       
@@ -95,6 +134,7 @@ export const patternsService = {
       }
     } catch (error) {
       console.error('Ошибка при загрузке изображения:', error);
+      console.error('Детали ошибки:', error.response?.data || 'Нет деталей ошибки');
       
       // В случае ошибки, возвращаем ответ с имитацией для демонстрационных целей
       console.log('Используем имитацию из-за ошибки загрузки');
@@ -109,7 +149,7 @@ export const patternsService = {
           
           resolve({
             data: {
-              imageUrl: `/uploads/${fileName}` // Обратите внимание, что здесь используем относительный путь
+              imageUrl: `http://localhost:3001/uploads/${fileName}` // Используем абсолютный путь
             }
           });
         }, 800); // Имитация задержки загрузки
@@ -121,23 +161,53 @@ export const patternsService = {
 // Сервис для управления избранным
 export const favoritesService = {
   getUserFavorites: async (userId) => {
-    return apiClient.get(`/favorites?userId=${userId}`);
+    // Обеспечиваем, что userId передается как строка
+    const userIdStr = userId.toString();
+    return apiClient.get(`/favorites?userId=${userIdStr}`);
   },
   addToFavorites: async (userId, patternId) => {
-    return apiClient.post('/favorites', { userId, patternId, createdAt: new Date().toISOString() });
+    // Обеспечиваем, что userId передается как строка
+    const userIdStr = userId.toString();
+    return apiClient.post('/favorites', { 
+      userId: userIdStr, 
+      patternId, 
+      createdAt: new Date().toISOString() 
+    });
   },
   removeFromFavorites: async (userId, patternId) => {
-    // Сначала находим ID записи
-    const response = await apiClient.get(`/favorites?userId=${userId}&patternId=${patternId}`);
-    if (response.data && response.data.length > 0) {
-      const favoriteId = response.data[0].id;
-      return apiClient.delete(`/favorites/${favoriteId}`);
+    // Обеспечиваем, что userId передается как строка
+    const userIdStr = userId.toString();
+    
+    // 1. Первый вариант: найти ID и удалить по нему
+    try {
+      const response = await apiClient.get(`/favorites?userId=${userIdStr}&patternId=${patternId}`);
+      if (response.data && response.data.length > 0) {
+        const favoriteId = response.data[0].id;
+        return apiClient.delete(`/favorites/${favoriteId}`);
+      }
+    } catch (error) {
+      console.error('Ошибка при поиске избранного:', error);
     }
-    return Promise.resolve();
+    
+    // 2. Второй вариант: удалить напрямую по параметрам запроса
+    return apiClient.delete(`/favorites?userId=${userIdStr}&patternId=${patternId}`);
+  }
+};
+
+// Сервис для аутентификации
+export const authService = {
+  login: async (credentials) => {
+    console.log('Отправка запроса на вход в систему:', { username: credentials.username });
+    return apiClient.post('/auth/login', credentials);
+  },
+  checkAuth: async () => {
+    console.log('Проверка аутентификации');
+    return apiClient.get('/auth/me');
   }
 };
 
 export default {
   patterns: patternsService,
-  favorites: favoritesService
+  favorites: favoritesService,
+  auth: authService
 };

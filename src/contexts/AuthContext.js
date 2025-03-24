@@ -13,20 +13,29 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Проверка токена при загрузке
     const token = localStorage.getItem('token');
+    console.log('Токен из localStorage:', token ? 'Есть токен' : 'Токен отсутствует');
+    
     if (token) {
       try {
         const decoded = jwtDecode(token);  // Используем jwtDecode вместо jwt_decode
         const currentTime = Date.now() / 1000;
+        
+        console.log('Информация о токене:', {
+          exp: decoded.exp,
+          currentTime: currentTime,
+          isValid: decoded.exp > currentTime
+        });
         
         if (decoded.exp > currentTime) {
           setCurrentUser(decoded);
           setIsAuthenticated(true);
         } else {
           // Токен истек
+          console.log('Токен истек, удаляем');
           localStorage.removeItem('token');
         }
       } catch (error) {
-        console.error('Invalid token', error);
+        console.error('Некорректный токен', error);
         localStorage.removeItem('token');
       }
     }
@@ -34,12 +43,14 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (token, user) => {
+    console.log('Вход выполнен, сохраняем токен и данные пользователя:', { user });
     localStorage.setItem('token', token);
     setCurrentUser(user);
     setIsAuthenticated(true);
   };
 
   const logout = () => {
+    console.log('Выход из системы, удаляем токен');
     localStorage.removeItem('token');
     setCurrentUser(null);
     setIsAuthenticated(false);

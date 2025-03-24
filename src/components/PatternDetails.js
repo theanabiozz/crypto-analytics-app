@@ -4,6 +4,7 @@ import { Box, CircularProgress, IconButton, Chip } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Star as StarIcon, StarBorder as StarBorderIcon } from '@mui/icons-material';
 import { patternsService, favoritesService } from '../services/databaseService';
 import binanceService from '../services/binanceService';
+import axios from 'axios';
 
 const PatternDetails = () => {
   const { id } = useParams();
@@ -19,8 +20,8 @@ const PatternDetails = () => {
     const fetchPattern = async () => {
       setLoading(true);
       try {
-        // Получаем данные о паттерне
-        const response = await patternsService.getById(id);
+        // Используем axios напрямую, чтобы обойти проблемы с прокси
+        const response = await axios.get(`http://localhost:3001/api/patterns/${id}`);
         
         if (response && response.data) {
           let patternData = response.data;
@@ -182,9 +183,17 @@ const PatternDetails = () => {
             <img 
               src={pattern.chartImageUrl.startsWith('http') 
                 ? pattern.chartImageUrl 
-                : `http://localhost:3001${pattern.chartImageUrl}`} 
+                : `http://localhost:3001${pattern.chartImageUrl.startsWith('/') ? '' : '/'}${pattern.chartImageUrl}`} 
               alt={`График ${pattern.ticker}`} 
               className="chart-image"
+              onError={(e) => {
+                console.error("Ошибка загрузки изображения:", e);
+                e.target.onerror = null; 
+                e.target.src = ""; // Пустой src
+                e.target.style.display = "none"; // Скрываем изображение при ошибке
+                e.target.parentNode.classList.add("chart-placeholder", patternTypeClass);
+                e.target.parentNode.textContent = `График ${pattern.ticker || 'Неизвестно'} (ошибка загрузки)`;
+              }}
             />
           ) : (
             <div className={`chart-placeholder ${patternTypeClass}`}>
